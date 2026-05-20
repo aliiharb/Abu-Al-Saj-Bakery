@@ -1,0 +1,207 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import { LockKeyhole, MessageCircle, Phone } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import api from '../api.js';
+import { categoryNotes, fallbackCategories, formatPrice } from '../menuData.js';
+
+export default function PublicMenu() {
+  const [categories, setCategories] = useState(fallbackCategories);
+  const [activeId, setActiveId] = useState(fallbackCategories[0]?.id);
+  const [loading, setLoading] = useState(true);
+  const sectionRefs = useRef({});
+
+  useEffect(() => {
+    let mounted = true;
+
+    api
+      .get('/api/categories')
+      .then((response) => {
+        if (mounted && Array.isArray(response.data) && response.data.length) {
+          setCategories(response.data);
+          setActiveId(response.data[0].id);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setCategories(fallbackCategories);
+          setActiveId(fallbackCategories[0]?.id);
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible?.target?.dataset?.categoryId) {
+          setActiveId(Number(visible.target.dataset.categoryId));
+        }
+      },
+      { rootMargin: '-34% 0px -54% 0px', threshold: [0.2, 0.35, 0.55] }
+    );
+
+    Object.values(sectionRefs.current).forEach((section) => {
+      if (section) observer.observe(section);
+    });
+
+    return () => observer.disconnect();
+  }, [categories]);
+
+  const availableCategories = useMemo(
+    () =>
+      categories.map((category) => ({
+        ...category,
+        items: (category.items || []).filter((item) => item.available !== false)
+      })),
+    [categories]
+  );
+
+  function scrollToCategory(categoryId) {
+    sectionRefs.current[categoryId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  return (
+    <main className="menu-page font-arabic" dir="rtl">
+      <div className="menu-content mx-auto flex min-h-screen w-full max-w-3xl flex-col px-4 pb-10 pt-8 sm:px-6">
+        <motion.header
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+          className="pb-6 text-center"
+        >
+          <div className="ornament-line mx-auto mb-4 max-w-sm text-sm">◆</div>
+          <p className="text-xs font-semibold uppercase text-gold-300/80">Lebanese Saj Bakery</p>
+          <h1 className="brand-title mt-2 font-display text-6xl font-bold leading-tight text-gold-300 sm:text-7xl">
+            أبو الصاج
+          </h1>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <a
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gold-500/35 bg-black/30 px-4 py-2 text-sm font-semibold text-gold-300 backdrop-blur focus-ring"
+              href="tel:71968846"
+            >
+              <Phone size={16} />
+              71968846
+            </a>
+            <Link
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-gold-500/35 bg-gold-500/12 px-4 py-2 text-sm font-semibold text-gold-300 backdrop-blur transition hover:bg-gold-500/20 focus-ring"
+              to="/admin"
+            >
+              <LockKeyhole size={16} />
+              دخول الإدارة
+            </Link>
+          </div>
+        </motion.header>
+
+        <nav className="sticky top-0 z-20 -mx-4 border-y border-gold-500/25 bg-coal/92 px-4 py-3 shadow-gold backdrop-blur-md sm:-mx-6 sm:px-6">
+          <div className="gold-scrollbar flex gap-3 overflow-x-auto pb-1">
+            {availableCategories.map((category) => {
+              const active = activeId === category.id;
+              return (
+                <button
+                  key={category.id}
+                  type="button"
+                  onClick={() => scrollToCategory(category.id)}
+                  className={`focus-ring shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${
+                    active
+                      ? 'border-gold-300 bg-gold-500 text-black shadow-[0_0_24px_rgba(201,168,76,0.22)]'
+                      : 'border-gold-500/25 bg-white/[0.03] text-gold-300 hover:border-gold-400/70'
+                  }`}
+                >
+                  {category.name_ar}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {loading ? (
+          <div className="py-12 text-center text-sm text-gold-300/70">...</div>
+        ) : (
+          <div className="space-y-12 pt-8">
+            {availableCategories.map((category, categoryIndex) => (
+              <motion.section
+                key={category.id}
+                ref={(node) => {
+                  sectionRefs.current[category.id] = node;
+                }}
+                data-category-id={category.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ delay: categoryIndex * 0.05, duration: 0.45 }}
+                className="scroll-mt-24"
+              >
+                <div className="mb-6 text-center">
+                  <h2 className="ribbon-title rounded px-8 py-2 font-display text-2xl font-bold">
+                    {category.name_ar}
+                  </h2>
+                  {categoryNotes[category.name_ar] ? (
+                    <p className="mt-4 text-sm font-semibold text-gold-300/75">{categoryNotes[category.name_ar]}</p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-3">
+                  {category.items?.length ? (
+                    category.items.map((item) => <MenuItem key={item.id} item={item} />)
+                  ) : (
+                    <div className="rounded border border-gold-500/20 bg-black/20 px-4 py-5 text-center text-sm text-stone-300">
+                      لا توجد أصناف حالياً
+                    </div>
+                  )}
+                </div>
+              </motion.section>
+            ))}
+          </div>
+        )}
+
+        <footer className="mt-auto pt-14 text-center">
+          <div className="ornament-line mx-auto mb-5 max-w-xs text-xs">◆</div>
+          <a
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-gold-500/35 bg-gold-500/10 px-5 py-2 text-sm font-bold text-gold-300 transition hover:bg-gold-500/18 focus-ring"
+            href="https://wa.me/96171968846"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <MessageCircle size={17} />
+            واتساب
+          </a>
+        </footer>
+      </div>
+    </main>
+  );
+}
+
+function MenuItem({ item }) {
+  return (
+    <article className="group flex min-h-16 items-center gap-3 border-b border-gold-500/18 bg-black/10 px-2 py-3 transition hover:border-gold-400/45 hover:bg-gold-500/[0.04]">
+      {item.image_url ? (
+        <img
+          className="h-14 w-14 shrink-0 rounded-full border border-gold-400/50 object-cover"
+          src={item.image_url}
+          alt={item.name_ar}
+          loading="lazy"
+        />
+      ) : null}
+      <div className="min-w-0">
+        <h3 className="font-display text-xl font-semibold leading-snug text-stone-50">{item.name_ar}</h3>
+        {item.description_ar ? <p className="mt-1 text-sm leading-6 text-stone-300/75">{item.description_ar}</p> : null}
+      </div>
+      <div className="mx-1 h-px min-w-8 flex-1 border-b border-dotted border-gold-500/45 group-hover:border-gold-300/80" />
+      <div className="shrink-0 text-left font-semibold text-gold-300">
+        <span className="block text-lg leading-none">{formatPrice(item.price)}</span>
+        <span className="text-[11px] text-gold-300/60">ل.ل</span>
+      </div>
+    </article>
+  );
+}

@@ -1,0 +1,345 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LayoutList, Loader2, LogOut, Plus, RefreshCcw, Tags } from 'lucide-react';
+import CategoriesPanel from '../components/admin/CategoriesPanel.jsx';
+import ItemModal from '../components/admin/ItemModal.jsx';
+import ItemsTable from '../components/admin/ItemsTable.jsx';
+import SidebarButton from '../components/admin/SidebarButton.jsx';
+import api from '../api.js';
+
+const emptyCategory = {
+  name_ar: '',
+  name_en: '',
+  sort_order: 0
+};
+
+function emptyItem(categoryId = '') {
+  return {
+    category_id: categoryId,
+    name_ar: '',
+    name_en: '',
+    description_ar: '',
+    description_en: '',
+    price: '',
+    image_url: '',
+    available: true,
+    sort_order: 0
+  };
+}
+
+export default function AdminDashboard() {
+  const navigate = useNavigate();
+  const [view, setView] = useState('items');
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [editingItemId, setEditingItemId] = useState(null);
+  const [itemForm, setItemForm] = useState(emptyItem());
+  const [categoryForm, setCategoryForm] = useState(emptyCategory);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+
+  useEffect(() => {
+    refreshData();
+  }, []);
+
+  const categoryOptions = useMemo(
+    () => categories.map((category) => ({ value: category.id, label: category.name_ar })),
+    [categories]
+  );
+
+  function logout() {
+    localStorage.removeItem('abu_saj_token');
+    navigate('/admin', { replace: true });
+  }
+
+  function handleApiError(apiError, fallback) {
+    setError(apiError.response?.data?.message || fallback);
+    if (apiError.response?.status === 401) logout();
+  }
+
+  async function refreshData() {
+    setLoading(true);
+    setError('');
+
+    try {
+      const [itemsResponse, categoriesResponse] = await Promise.all([
+        api.get('/api/items'),
+        api.get('/api/categories?includeUnavailable=true')
+      ]);
+
+      setItems(itemsResponse.data);
+      setCategories(categoriesResponse.data);
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not load dashboard data.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openNewItem() {
+    setEditingItemId(null);
+    setItemForm(emptyItem(categoryOptions[0]?.value || ''));
+    setItemModalOpen(true);
+  }
+
+  function openEditItem(item) {
+    setEditingItemId(item.id);
+    setItemForm({
+      category_id: item.category_id || '',
+      name_ar: item.name_ar || '',
+      name_en: item.name_en || '',
+      description_ar: item.description_ar || '',
+      description_en: item.description_en || '',
+      price: item.price || '',
+      image_url: item.image_url || '',
+      available: item.available !== false,
+      sort_order: item.sort_order || 0
+    });
+    setItemModalOpen(true);
+  }
+
+  function updateItemForm(field, value) {
+    setItemForm((current) => ({ ...current, [field]: value }));
+  }
+
+  async function uploadImage(file) {
+    if (!file) return;
+
+    setUploading(true);
+    setError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const response = await api.post('/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      updateItemForm('image_url', response.data.url);
+    } catch (apiError) {
+      handleApiError(apiError, 'Image upload failed.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function saveItem(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    const payload = {
+      ...itemForm,
+      category_id: Number(itemForm.category_id),
+      price: Number(itemForm.price),
+      sort_order: Number(itemForm.sort_order || 0)
+    };
+
+    try {
+      if (editingItemId) {
+        await api.put(`/api/items/${editingItemId}`, payload);
+      } else {
+        await api.post('/api/items', payload);
+      }
+      setItemModalOpen(false);
+      await refreshData();
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not save item.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function toggleAvailability(item) {
+    const payload = {
+      category_id: item.category_id,
+      name_ar: item.name_ar,
+      name_en: item.name_en || '',
+      description_ar: item.description_ar || '',
+      description_en: item.description_en || '',
+      price: Number(item.price),
+      image_url: item.image_url || '',
+      available: !item.available,
+      sort_order: item.sort_order || 0
+    };
+
+    try {
+      await api.put(`/api/items/${item.id}`, payload);
+      await refreshData();
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not update availability.');
+    }
+  }
+
+  async function deleteItem(item) {
+    if (!window.confirm(`Delete ${item.name_ar}?`)) return;
+
+    try {
+      await api.delete(`/api/items/${item.id}`);
+      await refreshData();
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not delete item.');
+    }
+  }
+
+  async function saveCategory(event) {
+    event.preventDefault();
+    setSaving(true);
+    setError('');
+
+    const payload = {
+      ...categoryForm,
+      sort_order: Number(categoryForm.sort_order || 0)
+    };
+
+    try {
+      if (editingCategoryId) {
+        await api.put(`/api/categories/${editingCategoryId}`, payload);
+      } else {
+        await api.post('/api/categories', payload);
+      }
+      setCategoryForm(emptyCategory);
+      setEditingCategoryId(null);
+      await refreshData();
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not save category.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function editCategory(category) {
+    setEditingCategoryId(category.id);
+    setCategoryForm({
+      name_ar: category.name_ar || '',
+      name_en: category.name_en || '',
+      sort_order: category.sort_order || 0
+    });
+  }
+
+  async function deleteCategory(category) {
+    if (!window.confirm(`Delete ${category.name_ar} and its items?`)) return;
+
+    try {
+      await api.delete(`/api/categories/${category.id}`);
+      await refreshData();
+    } catch (apiError) {
+      handleApiError(apiError, 'Could not delete category.');
+    }
+  }
+
+  return (
+    <main className="admin-shell min-h-screen" dir="ltr">
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <AdminSidebar view={view} onLogout={logout} onViewChange={setView} />
+
+        <section className="min-w-0 flex-1 p-4 sm:p-6">
+          <DashboardHeader activeView={view} onAddItem={openNewItem} onRefresh={refreshData} />
+
+          {error ? (
+            <div className="mb-4 rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+              {error}
+            </div>
+          ) : null}
+
+          {loading ? (
+            <div className="flex h-60 items-center justify-center text-stone-300">
+              <Loader2 size={24} className="animate-spin" />
+            </div>
+          ) : view === 'items' ? (
+            <ItemsTable items={items} onEdit={openEditItem} onDelete={deleteItem} onToggle={toggleAvailability} />
+          ) : (
+            <CategoriesPanel
+              categories={categories}
+              form={categoryForm}
+              editingId={editingCategoryId}
+              saving={saving}
+              onChange={(field, value) => setCategoryForm((current) => ({ ...current, [field]: value }))}
+              onCancel={() => {
+                setEditingCategoryId(null);
+                setCategoryForm(emptyCategory);
+              }}
+              onDelete={deleteCategory}
+              onEdit={editCategory}
+              onSubmit={saveCategory}
+            />
+          )}
+        </section>
+      </div>
+
+      <ItemModal
+        categories={categoryOptions}
+        form={itemForm}
+        isOpen={itemModalOpen}
+        isEditing={Boolean(editingItemId)}
+        saving={saving}
+        uploading={uploading}
+        onChange={updateItemForm}
+        onClose={() => setItemModalOpen(false)}
+        onImageUpload={uploadImage}
+        onSubmit={saveItem}
+      />
+    </main>
+  );
+}
+
+function AdminSidebar({ view, onLogout, onViewChange }) {
+  return (
+    <aside className="border-b border-white/10 bg-black/25 p-4 md:w-64 md:border-b-0 md:border-r">
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase text-gold-300/70">Abu Al-Saj</p>
+        <h1 className="mt-1 text-2xl font-bold text-white">Dashboard</h1>
+      </div>
+
+      <nav className="flex gap-2 md:flex-col">
+        <SidebarButton active={view === 'items'} icon={LayoutList} label="Items" onClick={() => onViewChange('items')} />
+        <SidebarButton active={view === 'categories'} icon={Tags} label="Categories" onClick={() => onViewChange('categories')} />
+      </nav>
+
+      <button
+        type="button"
+        onClick={onLogout}
+        className="focus-ring mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-stone-200 transition hover:bg-white/10"
+      >
+        <LogOut size={17} />
+        Logout
+      </button>
+    </aside>
+  );
+}
+
+function DashboardHeader({ activeView, onAddItem, onRefresh }) {
+  return (
+    <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 className="text-2xl font-bold text-white">{activeView === 'items' ? 'Items' : 'Categories'}</h2>
+        <p className="text-sm text-stone-400">Manage the live public menu.</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="focus-ring inline-flex items-center justify-center gap-2 rounded-md border border-white/10 px-3 py-2 text-sm font-semibold text-stone-200 transition hover:bg-white/10"
+        >
+          <RefreshCcw size={16} />
+          Refresh
+        </button>
+        {activeView === 'items' ? (
+          <button
+            type="button"
+            onClick={onAddItem}
+            className="focus-ring inline-flex items-center justify-center gap-2 rounded-md bg-gold-500 px-3 py-2 text-sm font-bold text-black transition hover:bg-gold-400"
+          >
+            <Plus size={16} />
+            Add Item
+          </button>
+        ) : null}
+      </div>
+    </header>
+  );
+}
+
