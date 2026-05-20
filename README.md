@@ -12,12 +12,11 @@ Full-stack menu and admin dashboard for Abu Al-Saj, built with:
 
 ## Structure
 
-```txt
 client/      React public menu and admin dashboard
 server/      Express API and Supabase integration
 server/db/   SQL schema and seed data
-.env         Local secrets, ignored by Git
-```
+
+
 
 ## Local Setup
 
