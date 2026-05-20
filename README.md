@@ -38,11 +38,12 @@ Fill the values:
 DATABASE_URL=your_supabase_postgres_connection_string
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your_supabase_service_role_key
-JWT_SECRET=your_jwt_secret
+JWT_SECRET=long_random_secret
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin
+ADMIN_PASSWORD=your_bcrypt_hash_or_password
 PORT=5000
-CLIENT_ORIGIN=http://localhost:5173,https://your-vercel-app.vercel.app
+CLIENT_ORIGIN=http://localhost:5173,https://your-netlify-site.netlify.app
+VITE_API_URL=
 ```
 
 For production, replace the plain admin password with a bcrypt hash:
@@ -81,6 +82,12 @@ Local URLs:
 Public menu: http://localhost:5173
 Admin:       http://localhost:5173/admin
 API:         http://localhost:5000
+```
+
+The Vite dev server proxies `/api/*` to `http://localhost:5000`, so local frontend calls work with an empty `VITE_API_URL`. You can also create `client/.env` with this value if you prefer direct local API calls:
+
+```env
+VITE_API_URL=http://localhost:5000
 ```
 
 Default local admin login:
@@ -127,33 +134,38 @@ git status --short
 
 Only `.env.example` should be committed, never `.env`.
 
-## Free Hosting
+## Netlify + Supabase Deployment
 
-Recommended free setup:
+This project deploys frontend and backend together on Netlify:
 
 ```txt
-Frontend: Vercel, root directory client
-Backend:  Render Web Service, root directory server
-Database: Supabase Free project
+Frontend: Netlify static build from client/
+Backend:  Netlify Functions from netlify/functions/
+Database: Supabase PostgreSQL
 Storage:  Supabase public bucket menu-images
 ```
 
-Frontend environment variable:
+Netlify build settings:
 
 ```txt
-VITE_API_URL=https://your-render-api.onrender.com
+Base directory: repository root
+Build command: npm run install:all && npm --prefix client run build
+Publish directory: client/dist
+Functions directory: netlify/functions
+Node version: 20
 ```
 
-Backend environment variables:
+Netlify environment variables:
 
 ```txt
-DATABASE_URL=your_supabase_pooler_or_direct_connection_url
+DATABASE_URL=your_supabase_postgres_connection_string
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_KEY=your_service_role_key
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
 JWT_SECRET=long_random_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_bcrypt_hash_or_password
-CLIENT_ORIGIN=https://your-vercel-app.vercel.app
+CLIENT_ORIGIN=https://your-netlify-site.netlify.app
+VITE_API_URL=
 ```
 
-Do not set `PORT` on Render. Render supplies it automatically.
+`VITE_API_URL` can be empty on Netlify because `/api/*` is redirected to the Netlify Function on the same domain. Keep `SUPABASE_SERVICE_KEY`, `DATABASE_URL`, `JWT_SECRET`, and admin credentials only in local `.env` files or Netlify environment variables; never commit real secret values.

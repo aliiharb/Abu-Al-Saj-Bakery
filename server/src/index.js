@@ -7,15 +7,21 @@ import menuRoutes from './routes/menuRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 const allowedOrigins = (process.env.CLIENT_ORIGIN || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const devOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
 app.use(
   cors({
-    origin: allowedOrigins.length ? allowedOrigins : true,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin) || devOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true
   })
 );
@@ -49,6 +55,11 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-app.listen(PORT, () => {
-  console.log(`Abu Al-Saj API running on http://localhost:${PORT}`);
-});
+if (!process.env.NETLIFY) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`Abu Al-Saj API running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
