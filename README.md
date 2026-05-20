@@ -155,6 +155,6 @@ JWT_SECRET=long_random_secret
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_bcrypt_hash_or_password
 CLIENT_ORIGIN=https://your-vercel-app.vercel.app
-PORT=5000
 ```
 
+Do not set `PORT` on Render. Render supplies it automatically.
