@@ -1,40 +1,42 @@
 import bcrypt from 'bcryptjs';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { asyncHandler } from '../utils/http.js';
 
 const router = Router();
 
-function passwordMatches(inputPassword, configuredPassword) {
-  if (configuredPassword.startsWith('$2')) {
-    return bcrypt.compare(inputPassword || '', configuredPassword);
-  }
-  return Promise.resolve(inputPassword === configuredPassword);
-}
-
-router.post(
-  '/auth/login',
-  asyncHandler(async (req, res) => {
+router.post('/auth/login', async (req, res) => {
+  try {
     const { username, password } = req.body;
 
     if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD || !process.env.JWT_SECRET) {
-      return res.status(500).json({ message: 'Admin auth environment variables are not configured.' });
+      return res.status(500).json({
+        error: 'Server auth environment variables are not configured'
+      });
     }
 
     const validUsername = username === process.env.ADMIN_USERNAME;
-    const validPassword = await passwordMatches(password, process.env.ADMIN_PASSWORD);
+    const storedPassword = process.env.ADMIN_PASSWORD;
+    let passwordOk = false;
 
-    if (!validUsername || !validPassword) {
-      return res.status(401).json({ message: 'Invalid admin credentials.' });
+    if (storedPassword?.startsWith('$2')) {
+      passwordOk = await bcrypt.compare(password, storedPassword);
+    } else {
+      passwordOk = password === storedPassword;
+    }
+
+    if (!validUsername || !passwordOk) {
+      return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
     const token = jwt.sign({ username, role: 'admin' }, process.env.JWT_SECRET, {
       expiresIn: '24h'
     });
 
-    res.json({ token });
-  })
-);
+    return res.json({ token });
+  } catch (error) {
+    console.error('Admin login failed:', error);
+    return res.status(500).json({ error: 'Login failed' });
+  }
+});
 
 export default router;
-

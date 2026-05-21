@@ -1,21 +1,27 @@
 import serverless from 'serverless-http';
 
-process.env.NETLIFY = process.env.NETLIFY || 'true';
+let cachedHandler;
 
-const { default: app } = await import('../../server/src/index.js');
-const serverlessHandler = serverless(app);
+export const handler = async (event, context) => {
+  if (!cachedHandler) {
+    process.env.NETLIFY = process.env.NETLIFY || 'true';
 
-export const handler = (event, context) => {
-  const normalizedEvent = { ...event };
+    const serverModule = await import('../../server/src/index.js');
 
-  if (normalizedEvent.path?.startsWith('/.netlify/functions/api')) {
-    const suffix = normalizedEvent.path.slice('/.netlify/functions/api'.length);
-    normalizedEvent.path = `/api${suffix}`;
+    const app = serverModule.default || serverModule.app || serverModule;
+
+    if (!app || typeof app !== 'function') {
+      console.error('Express app import failed:', Object.keys(serverModule));
+      return {
+        statusCode: 500,
+        body: JSON.stringify({
+          error: 'Express app was not exported correctly'
+        })
+      };
+    }
+
+    cachedHandler = serverless(app);
   }
 
-  if (normalizedEvent.rawUrl?.includes('/.netlify/functions/api')) {
-    normalizedEvent.rawUrl = normalizedEvent.rawUrl.replace('/.netlify/functions/api', '/api');
-  }
-
-  return serverlessHandler(normalizedEvent, context);
+  return cachedHandler(event, context);
 };

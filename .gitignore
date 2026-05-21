@@ -9,3 +9,6 @@ server/uploads/
 .dev-server.pid
 client/dist/
 .DS_Store
+
+# Local Netlify folder
+.netlify

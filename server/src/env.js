@@ -1,9 +1,25 @@
+import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+function findProjectRoot(startDirectory = process.cwd()) {
+  let currentDirectory = resolve(startDirectory);
 
-dotenv.config({ path: resolve(__dirname, '../../.env') });
-dotenv.config({ path: resolve(__dirname, '../.env') });
+  while (true) {
+    if (existsSync(resolve(currentDirectory, 'netlify.toml'))) {
+      return currentDirectory;
+    }
 
+    const parentDirectory = dirname(currentDirectory);
+    if (parentDirectory === currentDirectory) {
+      return resolve(startDirectory);
+    }
+
+    currentDirectory = parentDirectory;
+  }
+}
+
+const projectRoot = findProjectRoot();
+
+dotenv.config({ path: resolve(projectRoot, '.env') });
+dotenv.config({ path: resolve(projectRoot, 'server/.env') });
