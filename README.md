@@ -44,7 +44,10 @@ ADMIN_PASSWORD=your_bcrypt_hash_or_password
 PORT=5000
 CLIENT_ORIGIN=http://localhost:5173,https://your-netlify-site.netlify.app
 VITE_API_URL=
+VITE_WHATSAPP_PHONE=961XXXXXXXX
 ```
+
+`VITE_WHATSAPP_PHONE` is used by the public cart checkout. Use international format without the `+` sign, for example `96170123456`.
 
 For production, replace the plain admin password with a bcrypt hash:
 
@@ -166,6 +169,8 @@ ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your_bcrypt_hash_or_password
 CLIENT_ORIGIN=https://your-netlify-site.netlify.app
 VITE_API_URL=
+VITE_WHATSAPP_PHONE=961XXXXXXXX
 ```
 
 `VITE_API_URL` can be empty on Netlify because `/api/*` is redirected to the Netlify Function on the same domain. Keep `SUPABASE_SERVICE_KEY`, `DATABASE_URL`, `JWT_SECRET`, and admin credentials only in local `.env` files or Netlify environment variables; never commit real secret values.
+Set `VITE_WHATSAPP_PHONE` in Netlify with the bakery WhatsApp number in international format without `+`, for example `96170123456`.

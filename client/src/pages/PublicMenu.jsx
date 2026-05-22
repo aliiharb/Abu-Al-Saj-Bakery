@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LockKeyhole, MessageCircle, Phone } from 'lucide-react';
+import { Check, LockKeyhole, MessageCircle, Phone, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../api.js';
+import CartDrawer from '../components/CartDrawer.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import { categoryNotes, fallbackCategories, formatPrice } from '../menuData.js';
 
 export default function PublicMenu() {
   const [categories, setCategories] = useState(fallbackCategories);
   const [activeId, setActiveId] = useState(fallbackCategories[0]?.id);
   const [loading, setLoading] = useState(true);
+  const [cartOpen, setCartOpen] = useState(false);
+  const { itemCount } = useCart();
   const sectionRefs = useRef({});
 
   useEffect(() => {
@@ -178,29 +182,67 @@ export default function PublicMenu() {
           </a>
         </footer>
       </div>
+
+      <button
+        type="button"
+        className="focus-ring fixed bottom-5 right-4 z-40 inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-gold-300/60 bg-gold-500 px-5 py-3 text-sm font-extrabold text-black shadow-[0_16px_42px_rgba(0,0,0,0.42)] transition hover:bg-gold-400 sm:right-6"
+        onClick={() => setCartOpen(true)}
+        aria-label={`Open cart with ${itemCount} items`}
+      >
+        <ShoppingCart size={19} />
+        <span>Cart</span>
+        <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-black px-2 text-xs text-gold-300">
+          {itemCount}
+        </span>
+      </button>
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </main>
   );
 }
 
 function MenuItem({ item }) {
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+
+  function handleAddToCart() {
+    addItem(item);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 900);
+  }
+
   return (
-    <article className="group flex min-h-16 items-center gap-3 border-b border-gold-500/18 bg-black/10 px-2 py-3 transition hover:border-gold-400/45 hover:bg-gold-500/[0.04]">
+    <article className="group flex min-h-16 flex-col gap-3 border-b border-gold-500/18 bg-black/10 px-2 py-3 transition hover:border-gold-400/45 hover:bg-gold-500/[0.04] sm:flex-row sm:items-center">
       {item.image_url ? (
         <img
-          className="h-14 w-14 shrink-0 rounded-full border border-gold-400/50 object-cover"
+          className="h-16 w-16 shrink-0 rounded-full border border-gold-400/50 object-cover sm:h-14 sm:w-14"
           src={item.image_url}
           alt={item.name_ar}
           loading="lazy"
         />
       ) : null}
-      <div className="min-w-0">
+      <div className="min-w-0 self-stretch sm:self-auto">
         <h3 className="font-display text-xl font-semibold leading-snug text-stone-50">{item.name_ar}</h3>
         {item.description_ar ? <p className="mt-1 text-sm leading-6 text-stone-300/75">{item.description_ar}</p> : null}
       </div>
-      <div className="mx-1 h-px min-w-8 flex-1 border-b border-dotted border-gold-500/45 group-hover:border-gold-300/80" />
-      <div className="shrink-0 text-left font-semibold text-gold-300">
-        <span className="block text-lg leading-none">{formatPrice(item.price)}</span>
+      <div className="hidden h-px min-w-8 flex-1 border-b border-dotted border-gold-500/45 group-hover:border-gold-300/80 sm:block" />
+      <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end">
+        <div className="font-semibold text-gold-300 sm:text-left">
+          <span className="block text-lg leading-none">{formatPrice(item.price)}</span>
         <span className="text-[11px] text-gold-300/60">ل.ل</span>
+        </div>
+        <button
+          type="button"
+          className={`focus-ring inline-flex min-h-10 items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition ${
+            added
+              ? 'border-green-300/50 bg-green-500/18 text-green-100'
+              : 'border-gold-500/35 bg-gold-500/12 text-gold-300 hover:bg-gold-500/20'
+          }`}
+          onClick={handleAddToCart}
+        >
+          {added ? <Check size={16} /> : <ShoppingCart size={16} />}
+          {added ? 'Added' : 'Add to cart'}
+        </button>
       </div>
     </article>
   );
