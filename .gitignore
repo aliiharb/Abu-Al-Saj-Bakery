@@ -5,6 +5,7 @@ dist/
 !.env.example
 .env.local
 npm-debug.log*
+*.log
 server/uploads/
 .dev-server.pid
 client/dist/
@@ -12,3 +13,4 @@ client/dist/
 
 # Local Netlify folder
 .netlify
+deno.lock

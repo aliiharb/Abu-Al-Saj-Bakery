@@ -229,7 +229,7 @@ function MenuItem({ item }) {
       <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:flex-col sm:items-end">
         <div className="font-semibold text-gold-300 sm:text-left">
           <span className="block text-lg leading-none">{formatPrice(item.price)}</span>
-        <span className="text-[11px] text-gold-300/60">ل.ل</span>
+          <span className="text-[11px] text-gold-300/60">ل.ل</span>
         </div>
         <button
           type="button"
