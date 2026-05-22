@@ -1,0 +1,72 @@
+⬥ Injecting environment variable values for all scopes
+⬥ Injected netlify.toml file env vars: NODE_VERSION
+⬥ Injected .env file env vars: DATABASE_URL, SUPABASE_URL, SUPABASE_SERVICE_KEY, JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD, PORT, CLIENT_ORIGIN
+⬥ No app server detected. Using simple static server
+⬥ Running static server from "abulsajproject\client\dist"
+⬥ Setting up local dev server
+
+⬥ Static server listening to 3999
+
+   ╭─────────────────────── ⬥  ────────────────────────╮
+   │                                                   │
+   │   Local dev server ready: http://localhost:8888   │
+   │                                                   │
+   ╰───────────────────────────────────────────────────╯
+
+⬥ Loaded function api
+⬥ Rewrote URL to /.netlify/functions/api/categories
+Request from ::1: GET /.netlify/functions/api/categories
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+◇ injected env (0) from server\.env // tip: ⌁ auth for agents [www.vestauth.com]
+Response with status 200 in 489 ms.
+⬥ Rewrote URL to /index.html
+⬥ Rewrote URL to /.netlify/functions/api/health
+Request from ::ffff:127.0.0.1: GET /.netlify/functions/api/health
+Response with status 200 in 5 ms.
+⬥ Rewrote URL to /index.html
+⬥ Rewrote URL to /.netlify/functions/api/auth/login
+Request from ::1: POST /.netlify/functions/api/auth/login
+Response with status 200 in 30 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items
+Request from ::1: GET /.netlify/functions/api/items
+⬥ Rewrote URL to /.netlify/functions/api/categories?includeUnavailable=true
+⬥ Rewrote URL to /index.html
+Request from ::1: GET /.netlify/functions/api/categories?includeUnavailable=true
+Response with status 200 in 67 ms.
+Response with status 200 in 53 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items
+⬥ Rewrote URL to /.netlify/functions/api/categories?includeUnavailable=true
+Request from ::1: GET /.netlify/functions/api/items
+Request from ::1: GET /.netlify/functions/api/categories?includeUnavailable=true
+Response with status 304 in 58 ms.
+Response with status 304 in 57 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items/1
+Request from ::1: PUT /.netlify/functions/api/items/1
+Response with status 200 in 29 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items
+⬥ Rewrote URL to /.netlify/functions/api/categories?includeUnavailable=true
+Request from ::1: GET /.netlify/functions/api/items
+Request from ::1: GET /.netlify/functions/api/categories?includeUnavailable=true
+Response with status 200 in 26 ms.
+Response with status 200 in 26 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items
+⬥ Rewrote URL to /.netlify/functions/api/categories?includeUnavailable=true
+Request from ::1: GET /.netlify/functions/api/items
+Response with status 304 in 12 ms.
+Request from ::1: GET /.netlify/functions/api/categories?includeUnavailable=true
+Response with status 304 in 10 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items/1
+Request from ::1: PUT /.netlify/functions/api/items/1
+Response with status 200 in 54 ms.
+⬥ Rewrote URL to /.netlify/functions/api/items
+⬥ Rewrote URL to /.netlify/functions/api/categories?includeUnavailable=true
+Request from ::1: GET /.netlify/functions/api/items
+Request from ::1: GET /.netlify/functions/api/categories?includeUnavailable=true
+Response with status 200 in 18 ms.
+Response with status 200 in 17 ms.
+⬥ Rewrote URL to /.netlify/functions/api/auth/login
+Request from ::ffff:127.0.0.1: POST /.netlify/functions/api/auth/login
+Response with status 401 in 8 ms.
+⬥ Rewrote URL to /.netlify/functions/api/auth/login
+Request from ::ffff:127.0.0.1: OPTIONS /.netlify/functions/api/auth/login
+Response with status 204 in 4 ms.

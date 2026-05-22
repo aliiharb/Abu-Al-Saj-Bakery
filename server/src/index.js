@@ -7,19 +7,32 @@ import menuRoutes from './routes/menuRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 const app = express();
-const allowedOrigins = (process.env.CLIENT_ORIGIN || '')
-  .split(',')
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-const devOrigins = ['http://localhost:5173', 'http://127.0.0.1:5173'];
+const allowedOrigins = [
+  ...(process.env.CLIENT_ORIGIN || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+  'https://abualsajbakey.netlify.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:8888',
+  'http://127.0.0.1:8888'
+];
 
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || devOrigins.includes(origin)) {
+
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
+      console.error('Blocked by CORS:', {
+        origin,
+        allowedOrigins
+      });
+
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
