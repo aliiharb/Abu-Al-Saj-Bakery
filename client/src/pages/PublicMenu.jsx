@@ -180,14 +180,14 @@ export default function PublicMenu() {
             <MessageCircle size={17} />
             واتساب
           </a>
-          <div className="mt-6 space-y-2 text-center text-sm font-semibold text-gold-300/75" dir="ltr">
-            <p>Powered by Harb</p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-sm font-semibold text-gold-300/75" dir="ltr">
+            <span>Powered by Harb</span>
+            <span aria-hidden="true">|</span>
             <a
               className="inline-flex items-center justify-center gap-2 text-gold-300 transition hover:text-gold-200 focus-ring"
-              href="tel:+96181723602"
+              href="mailto:alimharb204@gmail.com"
             >
-              <Phone size={15} />
-              PN: +961 81723602
+              alimharb204@gmail.com
             </a>
           </div>
         </footer>
