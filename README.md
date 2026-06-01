@@ -93,12 +93,7 @@ The Vite dev server proxies `/api/*` to `http://localhost:5000`, so local fronte
 VITE_API_URL=http://localhost:5000
 ```
 
-Default local admin login:
-
-```txt
-username: admin
-password: admin
-```
+Set local admin credentials through `ADMIN_USERNAME` and `ADMIN_PASSWORD` in your `.env` file.
 
 ## API Routes
 

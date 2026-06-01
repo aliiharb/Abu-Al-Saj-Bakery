@@ -5,8 +5,8 @@ import api from '../api.js';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -36,6 +36,7 @@ export default function AdminLogin() {
     <main className="admin-shell flex items-center justify-center px-4 py-10" dir="ltr">
       <form
         onSubmit={handleSubmit}
+        autoComplete="off"
         className="w-full max-w-md rounded-lg border border-white/10 bg-white/[0.04] p-6 shadow-2xl backdrop-blur"
       >
         <div className="mb-8 flex items-center gap-3">
@@ -54,7 +55,8 @@ export default function AdminLogin() {
             className="focus-ring w-full rounded-md border border-white/10 bg-black/35 px-3 py-2 text-white"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
-            autoComplete="username"
+            autoComplete="off"
+            placeholder="Enter username"
             required
           />
         </label>
@@ -66,7 +68,8 @@ export default function AdminLogin() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
+            autoComplete="new-password"
+            placeholder="Enter password"
             required
           />
         </label>
