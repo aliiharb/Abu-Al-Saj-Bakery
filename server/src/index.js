@@ -40,6 +40,14 @@ app.use(
 );
 app.use(express.json({ limit: '2mb' }));
 
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/images')) {
+    res.set('Cache-Control', 'no-store');
+  }
+
+  next();
+});
+
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'abu-al-saj-api' });
 });

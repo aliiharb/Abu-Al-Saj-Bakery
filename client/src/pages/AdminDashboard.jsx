@@ -120,6 +120,18 @@ export default function AdminDashboard() {
     if (apiError.response?.status === 401) logout();
   }
 
+  function itemWithCategoryNames(item, fallback = {}) {
+    const category = categories.find((currentCategory) => Number(currentCategory.id) === Number(item.category_id));
+
+    return {
+      ...fallback,
+      ...item,
+      category_name_ar: category?.name_ar || fallback.category_name_ar || null,
+      category_name_en: category?.name_en || fallback.category_name_en || null,
+      category_sort_order: category?.sort_order || fallback.category_sort_order || 0
+    };
+  }
+
   async function refreshData({ showLoading = true } = {}) {
     if (showLoading) {
       setLoading(true);
@@ -127,9 +139,10 @@ export default function AdminDashboard() {
     setError('');
 
     try {
+      const cacheBuster = Date.now();
       const [itemsResponse, categoriesResponse] = await Promise.all([
-        api.get('/api/items'),
-        api.get('/api/categories?includeUnavailable=true')
+        api.get('/api/items', { params: { _: cacheBuster } }),
+        api.get('/api/categories', { params: { includeUnavailable: true, _: cacheBuster } })
       ]);
 
       setItems(itemsResponse.data);
@@ -210,13 +223,23 @@ export default function AdminDashboard() {
     };
 
     try {
+      let savedItem;
       if (editingItemId) {
-        await api.put(`/api/items/${editingItemId}`, payload);
+        const response = await api.put(`/api/items/${editingItemId}`, payload);
+        savedItem = response.data;
+
+        setItems((currentItems) =>
+          currentItems.map((currentItem) =>
+            Number(currentItem.id) === Number(editingItemId) ? itemWithCategoryNames(savedItem, currentItem) : currentItem
+          )
+        );
       } else {
-        await api.post('/api/items', payload);
+        const response = await api.post('/api/items', payload);
+        savedItem = response.data;
+
+        setItems((currentItems) => [...currentItems, itemWithCategoryNames(savedItem)]);
       }
       setItemModalOpen(false);
-      await refreshData();
     } catch (apiError) {
       handleApiError(apiError, 'Could not save item.');
     } finally {

@@ -21,7 +21,7 @@ export default function PublicMenu() {
     let mounted = true;
 
     api
-      .get('/api/categories')
+      .get('/api/categories', { params: { _: Date.now() } })
       .then((response) => {
         if (mounted && Array.isArray(response.data) && response.data.length) {
           setCategories(response.data);
