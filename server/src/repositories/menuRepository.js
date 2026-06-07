@@ -144,6 +144,16 @@ export function updateItem(id, item) {
   );
 }
 
+export function updateItemAvailability(id, available) {
+  return withDatabaseFallback(
+    async () => {
+      const result = await query('UPDATE menu_items SET available = $1 WHERE id = $2 RETURNING *', [available, id]);
+      return result.rowCount ? result.rows[0] : null;
+    },
+    () => memoryStore.updateItemAvailability(id, available)
+  );
+}
+
 export function deleteItem(id) {
   return withDatabaseFallback(
     async () => {
@@ -192,4 +202,3 @@ export function deleteCategory(id) {
     () => memoryStore.deleteCategory(id)
   );
 }
-

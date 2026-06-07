@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [togglingItemIds, setTogglingItemIds] = useState(() => new Set());
   const [error, setError] = useState('');
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [editingItemId, setEditingItemId] = useState(null);
@@ -119,8 +120,10 @@ export default function AdminDashboard() {
     if (apiError.response?.status === 401) logout();
   }
 
-  async function refreshData() {
-    setLoading(true);
+  async function refreshData({ showLoading = true } = {}) {
+    if (showLoading) {
+      setLoading(true);
+    }
     setError('');
 
     try {
@@ -134,7 +137,9 @@ export default function AdminDashboard() {
     } catch (apiError) {
       handleApiError(apiError, 'Could not load dashboard data.');
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }
 
@@ -216,23 +221,43 @@ export default function AdminDashboard() {
   }
 
   async function toggleAvailability(item) {
-    const payload = {
-      category_id: item.category_id,
-      name_ar: item.name_ar,
-      name_en: item.name_en || '',
-      description_ar: item.description_ar || '',
-      description_en: item.description_en || '',
-      price: Number(item.price),
-      image_url: item.image_url || '',
-      available: !item.available,
-      sort_order: item.sort_order || 0
-    };
+    const nextAvailable = !(item.available !== false);
 
+    setTogglingItemIds((current) => new Set(current).add(item.id));
+    setItems((currentItems) =>
+      currentItems.map((currentItem) =>
+        currentItem.id === item.id ? { ...currentItem, available: nextAvailable } : currentItem
+      )
+    );
     try {
-      await api.put(`/api/items/${item.id}`, payload);
-      await refreshData();
+      const response = await api.patch(`/api/items/${item.id}/availability`, {
+        available: nextAvailable
+      });
+      setItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id
+            ? {
+                ...currentItem,
+                ...response.data,
+                category_name_ar: currentItem.category_name_ar,
+                category_name_en: currentItem.category_name_en
+              }
+            : currentItem
+        )
+      );
     } catch (apiError) {
+      setItems((currentItems) =>
+        currentItems.map((currentItem) =>
+          currentItem.id === item.id ? { ...currentItem, available: item.available !== false } : currentItem
+        )
+      );
       handleApiError(apiError, 'Could not update availability.');
+    } finally {
+      setTogglingItemIds((current) => {
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      });
     }
   }
 
@@ -312,7 +337,13 @@ export default function AdminDashboard() {
               <Loader2 size={24} className="animate-spin" />
             </div>
           ) : view === 'items' ? (
-            <ItemsTable items={items} onEdit={openEditItem} onDelete={deleteItem} onToggle={toggleAvailability} />
+            <ItemsTable
+              items={items}
+              togglingItemIds={togglingItemIds}
+              onEdit={openEditItem}
+              onDelete={deleteItem}
+              onToggle={toggleAvailability}
+            />
           ) : (
             <CategoriesPanel
               categories={categories}

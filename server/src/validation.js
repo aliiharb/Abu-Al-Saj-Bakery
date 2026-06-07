@@ -64,3 +64,12 @@ export function normalizeCategoryPayload(body) {
   };
 }
 
+export function normalizeAvailabilityPayload(body) {
+  if (body.available === undefined || body.available === null || body.available === '') {
+    throw createHttpError(400, 'Availability is required.');
+  }
+
+  return {
+    available: parseBoolean(body.available)
+  };
+}

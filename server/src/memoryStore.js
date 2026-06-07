@@ -80,6 +80,19 @@ export function updateItem(id, item) {
   return clone(items[index]);
 }
 
+export function updateItemAvailability(id, available) {
+  const numericId = Number(id);
+  const index = items.findIndex((current) => current.id === numericId);
+  if (index === -1) return null;
+
+  items[index] = {
+    ...items[index],
+    available
+  };
+
+  return clone(items[index]);
+}
+
 export function deleteItem(id) {
   const numericId = Number(id);
   const before = items.length;
@@ -117,4 +130,3 @@ export function deleteCategory(id) {
   items = items.filter((item) => item.category_id !== numericId);
   return categories.length !== before;
 }
-

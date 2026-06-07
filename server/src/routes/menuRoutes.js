@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { requireAuth } from '../auth.js';
 import * as menuRepository from '../repositories/menuRepository.js';
 import { asyncHandler } from '../utils/http.js';
-import { normalizeCategoryPayload, normalizeItemPayload } from '../validation.js';
+import { normalizeAvailabilityPayload, normalizeCategoryPayload, normalizeItemPayload } from '../validation.js';
 
 const router = Router();
 
@@ -40,6 +40,21 @@ router.put(
   asyncHandler(async (req, res) => {
     const item = normalizeItemPayload(req.body);
     const updated = await menuRepository.updateItem(req.params.id, item);
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Item not found.' });
+    }
+
+    res.json(updated);
+  })
+);
+
+router.patch(
+  '/items/:id/availability',
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const { available } = normalizeAvailabilityPayload(req.body);
+    const updated = await menuRepository.updateItemAvailability(req.params.id, available);
 
     if (!updated) {
       return res.status(404).json({ message: 'Item not found.' });
@@ -102,4 +117,3 @@ router.delete(
 );
 
 export default router;
-

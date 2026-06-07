@@ -3,7 +3,7 @@ import { ImageUp, Pencil, Trash2 } from 'lucide-react';
 import { formatPrice } from '../../menuData.js';
 import IconButton from './IconButton.jsx';
 
-export default function ItemsTable({ items, onEdit, onDelete, onToggle }) {
+export default function ItemsTable({ items, togglingItemIds, onEdit, onDelete, onToggle }) {
   return (
     <div className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.035]">
       <div className="overflow-x-auto">
@@ -34,19 +34,27 @@ export default function ItemsTable({ items, onEdit, onDelete, onToggle }) {
                 <td className="px-4 py-3 text-stone-300">{item.category_name_ar || '-'}</td>
                 <td className="px-4 py-3 text-gold-300">{formatPrice(item.price)}</td>
                 <td className="px-4 py-3">
+                  {(() => {
+                    const isToggling = togglingItemIds.has(item.id);
+                    const isAvailable = item.available !== false;
+
+                    return (
                   <Switch
-                    checked={item.available !== false}
+                    checked={isAvailable}
+                    disabled={isToggling}
                     onChange={() => onToggle(item)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-                      item.available !== false ? 'bg-gold-500' : 'bg-stone-700'
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition disabled:cursor-wait disabled:opacity-70 ${
+                      isAvailable ? 'bg-gold-500' : 'bg-stone-700'
                     }`}
                   >
                     <span
                       className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${
-                        item.available !== false ? 'translate-x-5' : 'translate-x-1'
+                        isAvailable ? 'translate-x-5' : 'translate-x-1'
                       }`}
                     />
                   </Switch>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end gap-2">
@@ -69,4 +77,3 @@ export default function ItemsTable({ items, onEdit, onDelete, onToggle }) {
     </div>
   );
 }
-
