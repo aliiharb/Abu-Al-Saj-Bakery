@@ -13,6 +13,11 @@ const emptyCategory = {
   sort_order: 0
 };
 
+const MAX_UPLOAD_BYTES = 650 * 1024;
+const MAX_IMAGE_DIMENSION = 1200;
+const IMAGE_QUALITY_STEPS = [0.82, 0.72, 0.62, 0.52];
+const LOWEST_IMAGE_QUALITY = IMAGE_QUALITY_STEPS[IMAGE_QUALITY_STEPS.length - 1];
+
 function emptyItem(categoryId = '') {
   return {
     category_id: categoryId,
@@ -25,6 +30,59 @@ function emptyItem(categoryId = '') {
     available: true,
     sort_order: 0
   };
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Could not prepare image for upload.'));
+        }
+      },
+      type,
+      quality
+    );
+  });
+}
+
+async function resizeImageForUpload(file) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('Please choose an image file.');
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+
+  try {
+    const image = new Image();
+    image.src = imageUrl;
+    await image.decode();
+
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.width, image.height));
+    const width = Math.max(1, Math.round(image.width * scale));
+    const height = Math.max(1, Math.round(image.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d');
+    context.drawImage(image, 0, 0, width, height);
+
+    for (const quality of IMAGE_QUALITY_STEPS) {
+      const blob = await canvasToBlob(canvas, 'image/jpeg', quality);
+      if (blob.size <= MAX_UPLOAD_BYTES || quality === LOWEST_IMAGE_QUALITY) {
+        return new File([blob], `${file.name.replace(/\.[^.]+$/, '') || 'menu-item'}.jpg`, {
+          type: 'image/jpeg'
+        });
+      }
+    }
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+
+  return file;
 }
 
 export default function AdminDashboard() {
@@ -113,8 +171,9 @@ export default function AdminDashboard() {
     setError('');
 
     try {
+      const preparedFile = await resizeImageForUpload(file);
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', preparedFile);
       const response = await api.post('/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -129,6 +188,8 @@ export default function AdminDashboard() {
 
   async function saveItem(event) {
     event.preventDefault();
+    if (uploading) return;
+
     setSaving(true);
     setError('');
 
@@ -278,6 +339,7 @@ export default function AdminDashboard() {
         isEditing={Boolean(editingItemId)}
         saving={saving}
         uploading={uploading}
+        error={error}
         onChange={updateItemForm}
         onClose={() => setItemModalOpen(false)}
         onImageUpload={uploadImage}
@@ -342,4 +404,3 @@ function DashboardHeader({ activeView, onAddItem, onRefresh }) {
     </header>
   );
 }
-

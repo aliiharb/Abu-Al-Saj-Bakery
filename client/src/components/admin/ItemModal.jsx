@@ -6,6 +6,7 @@ import FormField from './FormField.jsx';
 export default function ItemModal({
   categories,
   form,
+  error,
   isEditing,
   isOpen,
   saving,
@@ -53,6 +54,12 @@ export default function ItemModal({
                     <X size={17} />
                   </button>
                 </div>
+
+                {error ? (
+                  <div className="mb-4 rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                    {error}
+                  </div>
+                ) : null}
 
                 <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2">
                   <FormField label="Name Arabic">
@@ -151,6 +158,7 @@ export default function ItemModal({
                           className="block w-full text-sm text-stone-300 file:mr-3 file:rounded-md file:border-0 file:bg-gold-500 file:px-3 file:py-2 file:font-bold file:text-black"
                           type="file"
                           accept="image/*"
+                          disabled={uploading || saving}
                           onChange={(event) => onImageUpload(event.target.files?.[0])}
                         />
                         {uploading ? (
@@ -177,7 +185,7 @@ export default function ItemModal({
                       disabled={saving || uploading}
                     >
                       {saving ? <Loader2 size={16} className="animate-spin" /> : null}
-                      Save
+                      {uploading ? 'Uploading image' : 'Save'}
                     </button>
                   </div>
                 </form>
@@ -189,4 +197,3 @@ export default function ItemModal({
     </Transition>
   );
 }
-
