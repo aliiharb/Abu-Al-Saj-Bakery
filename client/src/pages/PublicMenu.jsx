@@ -290,11 +290,11 @@ function ItemDetailsDialog({ item, onClose }) {
   }
 
   return (
-    <Dialog as="div" className="relative z-50" onClose={onClose}>
+    <Dialog open={Boolean(item)} as="div" className="relative z-50" onClose={onClose}>
       <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" />
-      <div className="fixed inset-0 overflow-y-auto p-4">
+      <div className="fixed inset-0 z-10 overflow-y-auto p-4">
         <div className="flex min-h-full items-center justify-center">
-          <DialogPanel className="w-full max-w-md overflow-hidden rounded-lg border border-gold-500/25 bg-[#11100d] text-stone-100 shadow-2xl">
+          <DialogPanel className="relative w-full max-w-md overflow-hidden rounded-lg border border-gold-500/25 bg-[#11100d] text-stone-100 shadow-2xl">
             <div className="relative aspect-[4/3] bg-black/35">
               {item.image_url ? (
                 <img
