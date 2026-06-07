@@ -1,5 +1,6 @@
 import { Switch } from '@headlessui/react';
 import { ImageUp, Pencil, Trash2 } from 'lucide-react';
+import { resolveImageUrl } from '../../api.js';
 import { formatPrice } from '../../menuData.js';
 import IconButton from './IconButton.jsx';
 
@@ -23,7 +24,7 @@ export default function ItemsTable({ items, togglingItemIds, onEdit, onDelete, o
               <tr key={item.id} className="text-stone-200">
                 <td className="px-4 py-3">
                   {item.image_url ? (
-                    <img className="h-11 w-11 rounded-full object-cover" src={item.image_url} alt={item.name_ar} />
+                    <img className="h-11 w-11 rounded-full object-cover" src={resolveImageUrl(item.image_url)} alt={item.name_ar} />
                   ) : (
                     <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-stone-500">
                       <ImageUp size={17} />

@@ -21,13 +21,17 @@ function dataUrlFromFile(file) {
   return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 }
 
+function apiImageUrlFor(baseUrl, objectPath) {
+  return `${(baseUrl || '').replace(/\/$/, '')}/api/images?path=${encodeURIComponent(objectPath)}`;
+}
+
 function objectPathFor(file) {
   const originalExt = file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
   const safeExt = originalExt.replace(/[^a-z0-9]/g, '') || 'jpg';
   return `${new Date().toISOString().slice(0, 10)}/${crypto.randomUUID()}.${safeExt}`;
 }
 
-export async function uploadMenuImage(file) {
+export async function uploadMenuImage(file, { baseUrl } = {}) {
   if (!canUseSupabaseStorage()) {
     return { url: dataUrlFromFile(file), storage: 'memory' };
   }
@@ -42,11 +46,35 @@ export async function uploadMenuImage(file) {
 
     if (error) throw error;
 
-    const { data } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(objectPath);
-    return { url: data.publicUrl, path: objectPath, storage: 'supabase' };
+    return {
+      url: apiImageUrlFor(baseUrl, objectPath),
+      path: objectPath,
+      storage: 'supabase'
+    };
   } catch (error) {
     console.warn(`Using in-memory upload fallback: ${error.code || error.message}`);
     return { url: dataUrlFromFile(file), storage: 'memory' };
   }
 }
 
+export async function downloadMenuImage(objectPath) {
+  if (!canUseSupabaseStorage()) {
+    const error = new Error('Image storage is not configured.');
+    error.status = 503;
+    throw error;
+  }
+
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase.storage.from(STORAGE_BUCKET).download(objectPath);
+
+  if (error) {
+    const downloadError = new Error(error.message || 'Image not found.');
+    downloadError.status = error.statusCode === '404' ? 404 : 502;
+    throw downloadError;
+  }
+
+  return {
+    buffer: Buffer.from(await data.arrayBuffer()),
+    contentType: data.type || 'application/octet-stream'
+  };
+}

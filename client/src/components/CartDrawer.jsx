@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+import { resolveImageUrl } from '../api.js';
 import { useCart } from '../context/CartContext.jsx';
 import { formatPrice } from '../menuData.js';
 
@@ -175,7 +176,7 @@ function CartItemCard({ cart, item }) {
         {item.image_url ? (
           <img
             className="h-14 w-14 shrink-0 rounded-md border border-gold-400/40 object-cover"
-            src={item.image_url}
+            src={resolveImageUrl(item.image_url)}
             alt={item.name}
             loading="lazy"
           />

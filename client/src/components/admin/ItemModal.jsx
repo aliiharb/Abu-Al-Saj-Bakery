@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Switch, Transition, TransitionChild } from '@headlessui/react';
 import { ImageUp, Loader2, X } from 'lucide-react';
+import { resolveImageUrl } from '../../api.js';
 import FormField from './FormField.jsx';
 
 export default function ItemModal({
@@ -147,7 +148,11 @@ export default function ItemModal({
                     <span className="mb-2 block text-sm font-semibold text-stone-300">Image Upload</span>
                     <div className="flex flex-col gap-3 rounded-md border border-white/10 bg-black/30 p-3 sm:flex-row sm:items-center">
                       {form.image_url ? (
-                        <img className="h-20 w-20 rounded-md object-cover" src={form.image_url} alt={form.name_ar || 'Menu item'} />
+                        <img
+                          className="h-20 w-20 rounded-md object-cover"
+                          src={resolveImageUrl(form.image_url)}
+                          alt={form.name_ar || 'Menu item'}
+                        />
                       ) : (
                         <div className="flex h-20 w-20 items-center justify-center rounded-md bg-white/10 text-stone-500">
                           <ImageUp size={22} />

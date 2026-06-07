@@ -183,6 +183,10 @@ export default function AdminDashboard() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
+      if (!response.data?.url) {
+        throw new Error('Image upload did not return a URL.');
+      }
+
       updateItemForm('image_url', response.data.url);
     } catch (apiError) {
       handleApiError(apiError, 'Image upload failed.');

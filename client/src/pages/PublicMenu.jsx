@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Check, LockKeyhole, MessageCircle, Phone, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import api from '../api.js';
+import api, { resolveImageUrl } from '../api.js';
 import CartDrawer from '../components/CartDrawer.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { categoryNotes, fallbackCategories, formatPrice } from '../menuData.js';
@@ -226,7 +226,7 @@ function MenuItem({ item }) {
       {item.image_url ? (
         <img
           className="h-16 w-16 shrink-0 rounded-full border border-gold-400/50 object-cover sm:h-14 sm:w-14"
-          src={item.image_url}
+          src={resolveImageUrl(item.image_url)}
           alt={item.name_ar}
           loading="lazy"
         />
