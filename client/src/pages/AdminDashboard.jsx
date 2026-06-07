@@ -377,6 +377,7 @@ export default function AdminDashboard() {
         error={error}
         onChange={updateItemForm}
         onClose={() => setItemModalOpen(false)}
+        onImageDelete={() => updateItemForm('image_url', '')}
         onImageUpload={uploadImage}
         onSubmit={saveItem}
       />

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react';
 import { motion } from 'framer-motion';
-import { Check, LockKeyhole, MessageCircle, Phone, ShoppingCart } from 'lucide-react';
+import { Check, ImageUp, LockKeyhole, MessageCircle, Phone, ShoppingCart, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api, { resolveImageUrl } from '../api.js';
 import CartDrawer from '../components/CartDrawer.jsx';
@@ -12,6 +13,7 @@ export default function PublicMenu() {
   const [activeId, setActiveId] = useState(fallbackCategories[0]?.id);
   const [loading, setLoading] = useState(true);
   const [cartOpen, setCartOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
   const { itemCount } = useCart();
   const sectionRefs = useRef({});
 
@@ -157,7 +159,9 @@ export default function PublicMenu() {
 
                 <div className="space-y-3">
                   {category.items?.length ? (
-                    category.items.map((item) => <MenuItem key={item.id} item={item} />)
+                    category.items.map((item) => (
+                      <MenuItem key={item.id} item={item} onSelect={() => setSelectedItem(item)} />
+                    ))
                   ) : (
                     <div className="rounded border border-gold-500/20 bg-black/20 px-4 py-5 text-center text-sm text-stone-300">
                       لا توجد أصناف حالياً
@@ -207,22 +211,39 @@ export default function PublicMenu() {
       </button>
 
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <ItemDetailsDialog item={selectedItem} onClose={() => setSelectedItem(null)} />
     </main>
   );
 }
 
-function MenuItem({ item }) {
+function MenuItem({ item, onSelect }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
 
-  function handleAddToCart() {
+  function handleAddToCart(event) {
+    event?.stopPropagation();
     addItem(item);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 900);
   }
 
+  function handleKeyDown(event) {
+    if (event.target !== event.currentTarget) return;
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onSelect();
+    }
+  }
+
   return (
-    <article className="group flex min-h-16 flex-col gap-3 border-b border-gold-500/18 bg-black/10 px-2 py-3 transition hover:border-gold-400/45 hover:bg-gold-500/[0.04] sm:flex-row sm:items-center">
+    <article
+      className="group flex min-h-16 cursor-pointer flex-col gap-3 border-b border-gold-500/18 bg-black/10 px-2 py-3 transition hover:border-gold-400/45 hover:bg-gold-500/[0.04] sm:flex-row sm:items-center"
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={handleKeyDown}
+    >
       {item.image_url ? (
         <img
           className="h-16 w-16 shrink-0 rounded-full border border-gold-400/50 object-cover sm:h-14 sm:w-14"
@@ -255,5 +276,77 @@ function MenuItem({ item }) {
         </button>
       </div>
     </article>
+  );
+}
+
+function ItemDetailsDialog({ item, onClose }) {
+  const { addItem } = useCart();
+
+  if (!item) return null;
+
+  function handleAddToCart() {
+    addItem(item);
+    onClose();
+  }
+
+  return (
+    <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <div className="fixed inset-0 bg-black/75 backdrop-blur-sm" />
+      <div className="fixed inset-0 overflow-y-auto p-4">
+        <div className="flex min-h-full items-center justify-center">
+          <DialogPanel className="w-full max-w-md overflow-hidden rounded-lg border border-gold-500/25 bg-[#11100d] text-stone-100 shadow-2xl">
+            <div className="relative aspect-[4/3] bg-black/35">
+              {item.image_url ? (
+                <img
+                  className="h-full w-full object-cover"
+                  src={resolveImageUrl(item.image_url)}
+                  alt={item.name_ar}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-gold-300/55">
+                  <ImageUp size={42} />
+                </div>
+              )}
+              <button
+                type="button"
+                className="focus-ring absolute left-3 top-3 flex h-10 w-10 items-center justify-center rounded-md border border-white/15 bg-black/55 text-stone-100 backdrop-blur transition hover:bg-black/75"
+                onClick={onClose}
+                aria-label="Close"
+              >
+                <X size={19} />
+              </button>
+            </div>
+
+            <div className="px-5 py-5" dir="rtl">
+              <DialogTitle className="font-display text-2xl font-bold leading-snug text-gold-300">
+                {item.name_ar}
+              </DialogTitle>
+              {item.name_en ? <p className="mt-1 text-sm font-semibold text-stone-400">{item.name_en}</p> : null}
+              {item.description_ar ? (
+                <p className="mt-4 text-sm leading-7 text-stone-200/85">{item.description_ar}</p>
+              ) : null}
+              {item.description_en ? (
+                <p className="mt-2 text-sm leading-6 text-stone-400" dir="ltr">{item.description_en}</p>
+              ) : null}
+
+              <div className="mt-5 flex items-center justify-between gap-4">
+                <div className="font-semibold text-gold-300">
+                  <span className="block text-2xl leading-none">{formatPrice(item.price)}</span>
+                  <span className="text-xs text-gold-300/60">Ù„.Ù„</span>
+                </div>
+                <button
+                  type="button"
+                  className="focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-gold-500/35 bg-gold-500 px-5 py-2 text-sm font-extrabold text-black transition hover:bg-gold-400"
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingCart size={17} />
+                  Add to cart
+                </button>
+              </div>
+            </div>
+          </DialogPanel>
+        </div>
+      </div>
+    </Dialog>
   );
 }

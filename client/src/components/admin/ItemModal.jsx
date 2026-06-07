@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Dialog, DialogPanel, DialogTitle, Switch, Transition, TransitionChild } from '@headlessui/react';
-import { ImageUp, Loader2, X } from 'lucide-react';
+import { ImageUp, Loader2, Trash2, X } from 'lucide-react';
 import { resolveImageUrl } from '../../api.js';
 import FormField from './FormField.jsx';
 
@@ -14,6 +14,7 @@ export default function ItemModal({
   uploading,
   onChange,
   onClose,
+  onImageDelete,
   onImageUpload,
   onSubmit
 }) {
@@ -173,6 +174,17 @@ export default function ItemModal({
                           </p>
                         ) : null}
                       </div>
+                      {form.image_url ? (
+                        <button
+                          type="button"
+                          onClick={onImageDelete}
+                          disabled={uploading || saving}
+                          className="focus-ring inline-flex h-10 items-center justify-center gap-2 rounded-md border border-red-300/30 bg-red-500/10 px-3 text-sm font-semibold text-red-100 transition hover:bg-red-500/18 disabled:opacity-60"
+                        >
+                          <Trash2 size={16} />
+                          Delete Image
+                        </button>
+                      ) : null}
                     </div>
                   </div>
 
